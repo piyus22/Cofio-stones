@@ -1,0 +1,12 @@
+{
+  "name": "Cofio Stones",
+  "short_name": "Cofio",
+  "description": "Gentle daily brain exercises. Free and private — your data never leaves your device.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#FAF7F0",
+  "theme_color": "#FAF7F0",
+  "icons": [
+    { "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
