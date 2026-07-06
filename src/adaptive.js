@@ -20,27 +20,40 @@ export function initGameStats() {
 
 // Called after each completed block of rounds for a game.
 // results: [{ correct: bool, ms: number }]
+// v2: decisions use an exponential moving average of accuracy rather than a
+// single block, so one slip in five rounds no longer whipsaws the level.
 export function updateAfterBlock(stats, results) {
   if (!results.length) return stats
   const accuracy = results.filter((r) => r.correct).length / results.length
   const avgMs = Math.round(results.reduce((s, r) => s + r.ms, 0) / results.length)
+  const emaAcc = round2(stats.emaAcc == null ? accuracy : stats.emaAcc * 0.55 + accuracy * 0.45)
 
   // Fast start: for the first few blocks of a game, a confident player jumps
   // quickly to their true comfort zone instead of crawling through easy levels.
   const settling = stats.history.length < 6
 
   let delta = 0
-  if (accuracy === 1 && settling) delta = +12
-  else if (accuracy >= 0.85) delta = settling ? +8 : +4
-  else if (accuracy >= 0.7) delta = +1.5
-  else if (accuracy >= 0.5) delta = -2.5
-  else delta = -6
+  if (settling) {
+    if (accuracy === 1) delta = +12
+    else if (accuracy >= 0.85) delta = +8
+    else if (accuracy >= 0.6) delta = +2
+    else delta = -4
+  } else {
+    if (emaAcc >= 0.9) delta = +3
+    else if (emaAcc >= 0.78) delta = +1.5
+    else if (emaAcc >= 0.65) delta = 0
+    else if (emaAcc >= 0.5) delta = -2
+    else delta = -5
+  }
 
-  // Speed bonus: clearly faster than their own recent average → small nudge up
   const recent = stats.history.slice(-5)
-  if (recent.length >= 3 && delta >= 0) {
+  if (recent.length >= 3) {
     const baseMs = recent.reduce((s, h) => s + h.avgMs, 0) / recent.length
-    if (avgMs < baseMs * 0.8) delta += 1
+    // Speed bonus: clearly faster than their own recent average → small nudge up
+    if (delta >= 0 && avgMs < baseMs * 0.8) delta += 1
+    // Strain guard: accurate but noticeably slower than usual → hold level
+    // instead of climbing; they're working hard enough already.
+    if (delta > 0 && avgMs > baseMs * 1.35) delta = 0
   }
 
   let level = clamp(stats.level + delta)
@@ -53,7 +66,7 @@ export function updateAfterBlock(stats, results) {
   // Trend guard: recent week noticeably below the month baseline → ease down gently
   level = clamp(Math.min(level, trendGuard(history, level)))
 
-  return { ...stats, level: round1(level), history }
+  return { ...stats, level: round1(level), emaAcc, history }
 }
 
 function trendGuard(history, level) {

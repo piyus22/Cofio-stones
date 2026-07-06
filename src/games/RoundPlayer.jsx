@@ -16,7 +16,7 @@ export default function RoundPlayer({ round, onDone }) {
 
 /* ---------- multiple choice (with optional memorize phase) ---------- */
 function McRound({ round, onDone }) {
-  const [phase, setPhase] = useState(round.memorize ? 'memorize' : 'question')
+  const [phase, setPhase] = useState(round.memorize ? 'memorize' : round.flash ? 'flash' : 'question')
   const [memIndex, setMemIndex] = useState(0)
   const [picked, setPicked] = useState(null)
   const startRef = useRef(null)
@@ -30,6 +30,13 @@ function McRound({ round, onDone }) {
     }, round.memorize.showMs)
     return () => clearTimeout(t)
   }, [phase, memIndex, round])
+
+  // flash phase (speed training): show briefly, then mask
+  useEffect(() => {
+    if (phase !== 'flash') return
+    const t = setTimeout(() => setPhase('question'), round.flash.ms)
+    return () => clearTimeout(t)
+  }, [phase, round])
 
   useEffect(() => {
     if (phase === 'question') startRef.current = Date.now()
@@ -53,10 +60,20 @@ function McRound({ round, onDone }) {
     )
   }
 
+  if (phase === 'flash') {
+    return (
+      <div>
+        <p className="center soft">Watch closely…</p>
+        <div className="stimulus symbol" aria-hidden="true">{round.flash.symbol}</div>
+      </div>
+    )
+  }
+
   const answered = picked !== null
   const wasCorrect = picked === round.answerIndex
   return (
     <div>
+      {round.flash && <div className="stimulus symbol soft" aria-hidden="true">▨</div>}
       {round.stimulus && (
         <div className={'stimulus ' + (round.stimulusClass === 'sentence' ? '' : round.stimulusClass || '')}
           style={{
@@ -118,8 +135,9 @@ function SpatialRound({ round, onDone }) {
     setPickedSet(next)
     if (next.length >= round.sequence.length) {
       const ms = Date.now() - startRef.current
-      const hits = next.filter((x) => round.sequence.includes(x)).length
-      const correct = hits === round.sequence.length
+      const correct = round.ordered
+        ? next.every((x, idx) => x === round.sequence[idx]) // order matters at top levels
+        : next.filter((x) => round.sequence.includes(x)).length === round.sequence.length
       setPhase('done')
       setTimeout(() => onDone({ correct, ms }), correct ? 1100 : 2200)
     }
@@ -131,8 +149,10 @@ function SpatialRound({ round, onDone }) {
   return (
     <div>
       <p className="center soft" aria-live="polite">
-        {phase === 'watch' && 'Watch which stones light up…'}
-        {phase === 'recall' && `Tap the ${round.sequence.length} stones that lit up`}
+        {phase === 'watch' && (round.ordered ? 'Watch the stones — remember their ORDER…' : 'Watch which stones light up…')}
+        {phase === 'recall' && (round.ordered
+          ? `Tap the ${round.sequence.length} stones in the order they lit up`
+          : `Tap the ${round.sequence.length} stones that lit up`)}
         {done && ''}
       </p>
       <div className="stones-grid" style={{ gridTemplateColumns: `repeat(${round.grid}, 1fr)` }}>

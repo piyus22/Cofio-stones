@@ -64,8 +64,7 @@ function reducer(state, action) {
       // action.result = { correct, ms }
       const session = state.session
       if (!session || session.finished) return state
-      const plan = SESSION_PLANS[session.planId]
-      const block = plan.blocks[session.blockIndex]
+      const block = session.blocks[session.blockIndex]
       const blockResults = [...(session.results[session.blockIndex] || []), action.result]
       let next = {
         ...session,
@@ -78,7 +77,7 @@ function reducer(state, action) {
         // block finished → adaptive update for this game
         games = { ...games, [block.game]: updateAfterBlock(games[block.game], blockResults) }
         next = { ...next, blockIndex: next.blockIndex + 1, roundIndex: 0 }
-        if (next.blockIndex >= plan.blocks.length) next = { ...next, finished: true }
+        if (next.blockIndex >= session.blocks.length) next = { ...next, finished: true }
       }
 
       let newState = { ...state, session: next, games }
@@ -146,9 +145,9 @@ function onSessionFinished(state) {
 
 const StoreContext = createContext(null)
 
-export function StoreProvider({ children }) {
+export function StoreProvider({ children, initial }) {
   const [state, dispatch] = useReducer(reducer, null, () => {
-    const saved = loadState()
+    const saved = initial !== undefined ? initial : loadState()
     return saved ? migrate(saved) : freshState()
   })
 

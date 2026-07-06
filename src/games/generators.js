@@ -4,7 +4,7 @@
 // more words, faster displays, bigger grids, trickier patterns — so the game
 // stays worthwhile for years while remaining winnable at every step.
 import { WORD_TIERS } from '../data/words.js'
-import { SENTENCE_TIERS } from '../data/sentences.js'
+import { SENTENCE_TIERS, SENTENCE_TEMPLATES } from '../data/sentences.js'
 
 const ri = (n) => Math.floor(Math.random() * n)
 const pick = (arr) => arr[ri(arr.length)]
@@ -17,6 +17,17 @@ const shuffle = (arr) => {
   return a
 }
 const sample = (arr, n) => shuffle(arr).slice(0, n)
+
+// Deck rotation: draw items without repeats until a pool is exhausted, then
+// reshuffle. Keeps word/sentence content fresh instead of randomly repeating.
+const decks = {}
+function drawFrom(key, arr, n = 1) {
+  let d = decks[key]
+  if (!d || d.size !== arr.length || d.pool.length < n) {
+    d = decks[key] = { pool: shuffle([...arr.keys()]), size: arr.length }
+  }
+  return d.pool.splice(0, n).map((i) => arr[i])
+}
 // t: 0..1 difficulty position; lerp helpers
 const T = (level) => Math.max(0, Math.min(1, (level - 1) / 99))
 const lerp = (a, b, t) => a + (b - a) * t
@@ -36,12 +47,13 @@ export function mathRound(level) {
   if (t > 0.15) ops.push('×')
   if (t > 0.35) ops.push('÷')
   if (t > 0.45) ops.push('3nums')
-  if (t > 0.8) ops.push('4nums')
+  if (t > 0.75) ops.push('4nums')
+  if (t > 0.88) ops.push('paren')      // (a + b) × c — real top-end challenge
   const op = pick(ops)
 
-  const addMax = ilerp(8, 400, t)       // addend size
-  const mulMax = ilerp(3, 19, t)        // factor size
-  const divMax = ilerp(3, 15, t)        // divisor / quotient size
+  const addMax = ilerp(8, 900, t)       // addend size
+  const mulMax = ilerp(3, 29, t)        // factor size
+  const divMax = ilerp(3, 19, t)        // divisor / quotient size
 
   let a, b, c, d, answer, text
   if (op === '+') {
@@ -61,10 +73,13 @@ export function mathRound(level) {
     a = 2 + ri(addMax); b = 1 + ri(Math.max(2, addMax >> 1)); c = 1 + ri(Math.max(2, addMax >> 1))
     if (Math.random() < 0.5) { answer = a + b - Math.min(c, a + b); text = `${a} + ${b} − ${Math.min(c, a + b)}` }
     else { if (b > a) [a, b] = [b, a]; answer = a - b + c; text = `${a} − ${b} + ${c}` }
-  } else { // 4nums
+  } else if (op === '4nums') {
     a = 5 + ri(addMax); b = 1 + ri(addMax >> 1); c = 1 + ri(addMax >> 2); d = 1 + ri(addMax >> 2)
     const cc = Math.min(c, a + b)
     answer = a + b - cc + d; text = `${a} + ${b} − ${cc} + ${d}`
+  } else { // paren: (a + b) × c
+    a = 3 + ri(12); b = 2 + ri(12); c = 2 + ri(8)
+    answer = (a + b) * c; text = `(${a} + ${b}) × ${c}`
   }
 
   const spread = Math.max(2, Math.round(Math.abs(answer) * 0.12))
@@ -83,13 +98,15 @@ export function mathRound(level) {
 // ---------- 2. Word Stones (verbal episodic memory) ----------
 export function wordRecallRound(level) {
   const t = T(level)
-  const tier = WORD_TIERS[t < 0.33 ? 0 : t < 0.66 ? 1 : 2]
-  const shownCount = ilerp(3, 10, t)                 // 3 → 10 words
-  const showMs = ilerp(2600, 900, t)                 // shorter glimpses
-  const words = sample(tier, Math.min(shownCount + 1, tier.length))
+  const tierIdx = t < 0.33 ? 0 : t < 0.66 ? 1 : 2
+  const tier = WORD_TIERS[tierIdx]
+  const shownCount = ilerp(3, 12, t)                 // 3 → 12 words
+  const showMs = ilerp(2600, 700, t)                 // shorter glimpses
+  const words = drawFrom('words' + tierIdx, tier, Math.min(shownCount + 1, tier.length))
   const notShown = words[words.length - 1]
   const shown = words.slice(0, words.length - 1)
-  const decoys = sample(shown, Math.min(3, shown.length))
+  const nDecoys = Math.min(t > 0.7 ? 4 : 3, shown.length) // 5 choices at the top
+  const decoys = sample(shown, nDecoys)
   const { choices, answerIndex } = mcFromAnswer(notShown, decoys)
   return { kind: 'mc', memorize: { words: shown, showMs }, question: 'Which word was NOT shown?', choices, answerIndex }
 }
@@ -97,11 +114,22 @@ export function wordRecallRound(level) {
 // ---------- 3. Sentence Garden (language / semantic memory) ----------
 export function sentenceFillRound(level) {
   const t = T(level)
-  const tier = SENTENCE_TIERS[t < 0.33 ? 0 : t < 0.66 ? 1 : 2]
-  const s = pick(tier)
+  const tierIdx = t < 0.33 ? 0 : t < 0.66 ? 1 : 2
   const wrongCount = t < 0.15 ? 2 : 3
-  const { choices, answerIndex } = mcFromAnswer(s.answer, sample(s.wrong, wrongCount))
-  return { kind: 'mc', stimulus: s.text.replace('___', '＿＿＿'), stimulusClass: 'sentence', question: 'Which word completes the sentence?', choices, answerIndex }
+
+  // Mix curated sentences with template variants (several right answers each),
+  // so combinations stay fresh over months of play.
+  let text, answer, wrongPool
+  if (Math.random() < 0.5) {
+    const s = drawFrom('sent' + tierIdx, SENTENCE_TIERS[tierIdx], 1)[0]
+    text = s.text; answer = s.answer; wrongPool = s.wrong
+  } else {
+    const tpl = drawFrom('stpl' + tierIdx, SENTENCE_TEMPLATES[tierIdx], 1)[0]
+    text = tpl.text; answer = pick(tpl.right); wrongPool = tpl.wrong
+  }
+
+  const { choices, answerIndex } = mcFromAnswer(answer, sample(wrongPool, wrongCount))
+  return { kind: 'mc', stimulus: text.replace('___', '＿＿＿'), stimulusClass: 'sentence', question: 'Which word completes the sentence?', choices, answerIndex }
 }
 
 // ---------- 4. Stone Path (spatial / visuospatial memory) ----------
@@ -109,10 +137,12 @@ export function spatialRound(level) {
   const t = T(level)
   const grid = t < 0.4 ? 3 : t < 0.75 ? 4 : 5        // 3×3 → 5×5
   const cells = grid * grid
-  const count = Math.min(ilerp(2, 9, t), cells - 2)  // 2 → 9 stones
-  const showMs = ilerp(1100, 450, t)
+  const count = Math.min(ilerp(2, 10, t), cells - 2) // 2 → 10 stones
+  const showMs = ilerp(1100, 400, t)
   const seq = sample([...Array(cells).keys()], count)
-  return { kind: 'spatial', grid, sequence: seq, showMs }
+  // top levels: recall the ORDER too, not just the places
+  const ordered = t > 0.85
+  return { kind: 'spatial', grid, sequence: seq, showMs, ordered }
 }
 
 // ---------- 5. Quick Match (processing speed — ACTIVE speed arm) ----------
@@ -122,6 +152,9 @@ const SYMBOL_SETS = [
   ['⬠', '⬡', '◐', '◑', '◒', '◓'],   // similar shapes = harder discrimination
   ['◧', '◨', '◩', '◪', '⬒', '⬓'],
 ]
+// Calibrated display-time training (ACTIVE speed-arm paradigm): the shape
+// FLASHES briefly, is masked, and must be identified from memory. The display
+// time itself is the difficulty — 1300ms at level 1 down to 180ms at level 100.
 export function speedMatchRound(level) {
   const t = T(level)
   const set = SYMBOL_SETS[Math.min(Math.floor(t * 4), 3)]
@@ -130,7 +163,15 @@ export function speedMatchRound(level) {
   const nChoices = 3 + (t > 0.3 ? 1 : 0) + (t > 0.6 ? 1 : 0) + (t > 0.85 ? 1 : 0) // 3 → 6
   const wrongs = sample(others, nChoices - 1)
   const { choices, answerIndex } = mcFromAnswer(target, wrongs)
-  return { kind: 'mc', stimulus: target, stimulusClass: 'symbol', question: 'Find the matching shape', choices, answerIndex, speed: true }
+  return {
+    kind: 'mc',
+    flash: { symbol: target, ms: ilerp(1300, 180, t) },
+    stimulusClass: 'symbol',
+    question: 'Which shape did you just see?',
+    choices,
+    answerIndex,
+    speed: true,
+  }
 }
 
 // ---------- 6. Pattern Pebbles (reasoning — ACTIVE reasoning arm) ----------
@@ -140,6 +181,7 @@ export function patternRound(level) {
   if (t > 0.35) kinds.push('alt')      // alternating two-step: +a, +b, +a, +b
   if (t > 0.55) kinds.push('double')   // geometric doubling
   if (t > 0.75) kinds.push('growstep') // step itself grows: +1, +2, +3…
+  if (t > 0.85) kinds.push('fib')      // each number is the sum of the previous two
   const kind = pick(kinds)
 
   if (kind === 'shape') {
@@ -173,12 +215,17 @@ export function patternRound(level) {
     seq = [v]
     for (let i = 0; i < 3; i++) { v *= 2; seq.push(v) }
     answer = v * 2
-  } else { // growstep
+  } else if (kind === 'growstep') {
     let v = 1 + ri(10), step = 1 + ri(3)
     seq = [v]
     for (let i = 0; i < 4; i++) { v += step + i; seq.push(v) }
     answer = seq[4] + step + 4
     seq = seq.slice(0, 5)
+  } else { // fib: each number is the sum of the previous two
+    let x = 1 + ri(4), y = x + 1 + ri(4)
+    seq = [x, y]
+    for (let i = 0; i < 3; i++) seq.push(seq[seq.length - 1] + seq[seq.length - 2])
+    answer = seq[seq.length - 1] + seq[seq.length - 2]
   }
 
   const wrongs = new Set()

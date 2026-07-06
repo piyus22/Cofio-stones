@@ -52,6 +52,34 @@ All data stays on the user's device; export/import file to carry progress across
 - Session-end summary redesigned: per-game breakdown with bloom marks (🌸/🌿)
 - Note: GitHub Pages requires the repo to be PUBLIC on a free account
 
+## v0.4 additions (done) — content + engine depth
+- Adaptive engine v2: EMA-smoothed accuracy (one slip no longer drops a level),
+  strain guard (accurate-but-slow holds level instead of climbing), fast-start kept
+- Higher ceilings: math to (a+b)×c and 3-digit ops, 12-word recall, 5×5 ordered
+  spatial recall at top levels, Fibonacci patterns
+- Content ~3x: 240 words (80/tier), 120 sentences (40/tier)
+- Deck rotation: no word/sentence repeats until an entire pool is used
+- Test suite committed to tests/ with `npm test`; deploy workflow now runs tests
+
+## v0.5 additions (done) — science + longevity + mobile durability
+- Quick Match reworked to ACTIVE-style calibrated display-time training:
+  shape flashes (1300ms → 180ms by level), masked, identified from memory
+- Strategy coaching: rotating mnemonic tips before every block (ACTIVE taught
+  strategies, so do we) — 8 games × 3-4 tips each
+- "Why this works" science page: trial summaries, per-game evidence mapping,
+  honest "what we cannot promise" section, citations (via You → The science)
+- Daily session shuffling: date-seeded rotation; 5-min session cycles all
+  8 games across the week; paused sessions keep their own block list
+- Sentence template engine: 18 templates × 4-6 answers = hundreds of fresh
+  variants mixed 50/50 with the curated bank
+- iOS/Android durability: IndexedDB write-through + navigator.storage.persist(),
+  auto-restore if localStorage is evicted, backup nudge every 10 sessions,
+  apple-mobile-web-app meta tags
+
+## Remaining critique items (not yet done)
+- First-experience pack: per-game guided demo, colorblind-safe Stroop inks,
+  memorize-pacing control, replace confirm()/alert(), accessibility audit
+
 ## Next steps (v2 candidates)
 - QR-code progress transfer between devices
 - Audio cues + optional voice prompts (hearing/vision accessibility)

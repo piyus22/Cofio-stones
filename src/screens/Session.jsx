@@ -7,6 +7,7 @@ import { GAMES } from '../games/generators.js'
 import { gameLevel } from '../adaptive.js'
 import RoundPlayer from '../games/RoundPlayer.jsx'
 import { BADGES } from '../badges.js'
+import { tipFor } from '../data/strategies.js'
 
 export default function Session({ goHome }) {
   const { state, dispatch } = useStore()
@@ -18,7 +19,7 @@ export default function Session({ goHome }) {
 
   if (session.finished) return <Finished goHome={goHome} />
 
-  const block = plan.blocks[session.blockIndex]
+  const block = session.blocks[session.blockIndex]
   const game = GAMES[block.game]
   const level = gameLevel(state.games[block.game])
   const progress = sessionProgress(session)
@@ -59,6 +60,11 @@ function BlockIntro({ game, onStart, isFirst, resumed }) {
       <div style={{ fontSize: '3em' }}>{game.icon}</div>
       <h2>{game.name}</h2>
       <p className="soft">{game.domain}</p>
+      {tipFor(game.id) && (
+        <p style={{ background: 'var(--gold-soft)', borderRadius: 12, padding: '10px 14px', fontSize: '0.95em' }}>
+          💡 {tipFor(game.id)}
+        </p>
+      )}
       {resumed && <p className="soft">Welcome back — continuing right where you left off.</p>}
       <button className="btn btn-primary" onClick={onStart} style={{ marginTop: 18 }}>
         {isFirst ? 'Begin' : 'Ready — let’s go'}
@@ -76,9 +82,8 @@ function Finished({ goHome }) {
   const { state, dispatch } = useStore()
   const newBadges = state.newBadges
   const session = state.session
-  const plan = SESSION_PLANS[session.planId]
 
-  const rows = plan.blocks.map((b, i) => {
+  const rows = session.blocks.map((b, i) => {
     const res = session.results[i] || []
     return { game: GAMES[b.game], correct: res.filter((r) => r.correct).length, total: res.length }
   })
@@ -104,6 +109,7 @@ function Finished({ goHome }) {
           </div>
         ))}
       </div>
+      <BackupNudge />
       {newBadges.length > 0 && (
         <div className="card" style={{ textAlign: 'center' }}>
           <h3>New badge{newBadges.length > 1 ? 's' : ''} earned!</h3>
@@ -120,6 +126,19 @@ function Finished({ goHome }) {
       >
         Done
       </button>
+    </div>
+  )
+}
+
+// Every 10th session, gently suggest saving a progress file. Phones can lose
+// browser data; a saved file means months of history are never at risk.
+function BackupNudge() {
+  const { state } = useStore()
+  const total = Object.values(state.sessionCounts || {}).reduce((a, b) => a + b, 0)
+  if (total === 0 || total % 10 !== 0) return null
+  return (
+    <div className="card" style={{ textAlign: 'center', background: 'var(--green-soft)' }}>
+      <p style={{ margin: '4px 0' }}>💾 That’s {total} sessions! A good moment to save a progress file — you’ll find the button under <strong>You → Keep your progress safe</strong>.</p>
     </div>
   )
 }

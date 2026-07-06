@@ -2,12 +2,16 @@
 import React, { useRef, useState } from 'react'
 import { useStore } from '../store.jsx'
 import { exportState, parseImport } from '../storage.js'
+import Science from './Science.jsx'
 
 export default function Profile() {
   const { state, dispatch } = useStore()
   const [name, setName] = useState(state.profile?.name || '')
   const [saved, setSaved] = useState(false)
+  const [showScience, setShowScience] = useState(false)
   const fileRef = useRef(null)
+
+  if (showScience) return <Science onBack={() => setShowScience(false)} />
 
   function saveName() {
     dispatch({ type: 'UPDATE_PROFILE', profile: { name: name.trim() } })
@@ -60,6 +64,12 @@ export default function Profile() {
             </button>
           ))}
         </div>
+      </div>
+
+      <div className="card">
+        <h3>The science 🔬</h3>
+        <p className="soft small">What the research shows, how each exercise maps to it, and what no app can honestly promise.</p>
+        <button className="btn" onClick={() => setShowScience(true)}>Why this works ▸</button>
       </div>
 
       <div className="card">
