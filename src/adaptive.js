@@ -8,11 +8,12 @@
 //    experience stays encouraging, and let growth resume from there.
 
 export const LEVEL_MIN = 1
-export const LEVEL_MAX = 8
+export const LEVEL_MAX = 100
 
 export function initGameStats() {
   return {
     level: 1,
+    scale100: true, // level scale marker (v0.2+); old saves are migrated
     history: [], // { t: ISO date, level, accuracy, avgMs, rounds }
   }
 }
@@ -29,17 +30,17 @@ export function updateAfterBlock(stats, results) {
   const settling = stats.history.length < 6
 
   let delta = 0
-  if (accuracy === 1 && settling) delta = +1.0
-  else if (accuracy >= 0.85) delta = settling ? +0.7 : +0.4
-  else if (accuracy >= 0.7) delta = +0.15
-  else if (accuracy >= 0.5) delta = -0.25
-  else delta = -0.6
+  if (accuracy === 1 && settling) delta = +12
+  else if (accuracy >= 0.85) delta = settling ? +8 : +4
+  else if (accuracy >= 0.7) delta = +1.5
+  else if (accuracy >= 0.5) delta = -2.5
+  else delta = -6
 
   // Speed bonus: clearly faster than their own recent average → small nudge up
   const recent = stats.history.slice(-5)
   if (recent.length >= 3 && delta >= 0) {
     const baseMs = recent.reduce((s, h) => s + h.avgMs, 0) / recent.length
-    if (avgMs < baseMs * 0.8) delta += 0.1
+    if (avgMs < baseMs * 0.8) delta += 1
   }
 
   let level = clamp(stats.level + delta)
@@ -52,7 +53,7 @@ export function updateAfterBlock(stats, results) {
   // Trend guard: recent week noticeably below the month baseline → ease down gently
   level = clamp(Math.min(level, trendGuard(history, level)))
 
-  return { level: round1(level), history }
+  return { ...stats, level: round1(level), history }
 }
 
 function trendGuard(history, level) {
@@ -65,7 +66,7 @@ function trendGuard(history, level) {
   const baseline = history.filter((h) => inDays(h, 35, 7))
   if (recent.length < 3 || baseline.length < 4) return level
   const avg = (arr) => arr.reduce((s, h) => s + h.accuracy, 0) / arr.length
-  if (avg(recent) < avg(baseline) - 0.15) return level - 0.5
+  if (avg(recent) < avg(baseline) - 0.15) return level - 6
   return level
 }
 
@@ -82,8 +83,8 @@ export function trendLabel(history) {
   const newer = history.slice(half)
   const avg = (arr) => arr.reduce((s, h) => s + h.level, 0) / arr.length
   const diff = avg(newer) - avg(older)
-  if (diff > 0.3) return { arrow: '↗', label: 'Growing steadily' }
-  if (diff < -0.3) return { arrow: '→', label: 'Taking it comfortably' }
+  if (diff > 3) return { arrow: '↗', label: 'Growing steadily' }
+  if (diff < -3) return { arrow: '→', label: 'Taking it comfortably' }
   return { arrow: '→', label: 'Nice and steady' }
 }
 

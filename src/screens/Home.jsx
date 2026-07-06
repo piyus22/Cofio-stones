@@ -4,6 +4,7 @@ import { useStore } from '../store.jsx'
 import { SESSION_PLANS, isResumable, sessionProgress } from '../sessions.js'
 import { GAMES, GAME_IDS } from '../games/generators.js'
 import { todayKey } from '../storage.js'
+import { buildRecap, weekKey } from '../recap.js'
 
 export default function Home({ startSession, startPractice }) {
   const { state, dispatch } = useStore()
@@ -21,6 +22,8 @@ export default function Home({ startSession, startPractice }) {
         <p className="soft">🔥 You’ve played {state.streak.current} days in a row. Wonderful.</p>
       )}
       {playedToday && !resumable && <p className="soft">You’ve finished a session today — feel free to enjoy another.</p>}
+
+      <WeeklyRecap />
 
       {resumable && (
         <div className="card" style={{ borderColor: 'var(--green)', borderWidth: 2 }}>
@@ -66,6 +69,27 @@ export default function Home({ startSession, startPractice }) {
           </div>
         </>
       )}
+    </div>
+  )
+}
+
+// Shown once per calendar week, summarizing the previous 7 days.
+function WeeklyRecap() {
+  const { state, dispatch } = useStore()
+  const thisWeek = weekKey()
+  if (state.flags?.lastRecapWeek === thisWeek) return null
+  const recap = buildRecap(state)
+  if (!recap) return null
+  return (
+    <div className="card" style={{ background: 'var(--gold-soft)', borderColor: 'var(--gold)' }}>
+      <h3>Your week in the garden 🌼</h3>
+      {recap.lines.map((l, i) => <p key={i} style={{ margin: '6px 0' }}>{l}</p>)}
+      <button
+        className="btn btn-quiet"
+        onClick={() => dispatch({ type: 'SET_FLAG', flag: 'lastRecapWeek', value: thisWeek })}
+      >
+        Thank you ✓
+      </button>
     </div>
   )
 }

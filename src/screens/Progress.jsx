@@ -52,14 +52,12 @@ export default function Progress() {
 }
 
 function LevelDots({ level }) {
+  const pct = Math.max(2, (level / LEVEL_MAX) * 100)
   return (
-    <div style={{ display: 'flex', gap: 6, margin: '10px 0' }} aria-label={`level ${Math.round(level)} of ${LEVEL_MAX}`}>
-      {Array.from({ length: LEVEL_MAX }, (_, i) => (
-        <div key={i} style={{
-          flex: 1, height: 10, borderRadius: 5,
-          background: i < Math.round(level) ? 'var(--green)' : 'var(--line)',
-        }} />
-      ))}
+    <div className="session-bar" style={{ margin: '10px 0' }} role="progressbar"
+      aria-label={`level ${Math.round(level)} of ${LEVEL_MAX}`}
+      aria-valuenow={Math.round(level)} aria-valuemin={1} aria-valuemax={LEVEL_MAX}>
+      <div style={{ width: `${pct}%` }} />
     </div>
   )
 }
@@ -69,7 +67,7 @@ function Sparkline({ history }) {
   const pts = history.slice(-30)
   const w = 300, h = 50, pad = 4
   const xs = pts.map((_, i) => pad + (i * (w - 2 * pad)) / (pts.length - 1))
-  const min = 1, max = 8
+  const min = 1, max = 100
   const ys = pts.map((p) => h - pad - ((p.level - min) / (max - min)) * (h - 2 * pad))
   const d = xs.map((x, i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${ys[i].toFixed(1)}`).join(' ')
   return (

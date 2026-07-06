@@ -35,6 +35,15 @@ All data stays on the user's device; export/import file to carry progress across
 - SSR render test: Welcome, Home (greeting + session choices), Progress,
   Badges, Profile and all 6 round players render without errors.
 
+## v0.2 additions (done)
+- New stone-cairn logo (SVG + PNG icons, iOS install-ready)
+- Levels expanded 1–8 → 1–100 with continuous scaling; old saves auto-migrate
+- Fast-start: perfect early blocks jump levels quickly to find comfort zone
+- Practice Corner: free play of any single game, feeds growth tracking
+- Weekly recap card on Home (once per calendar week, on-device)
+- GitHub Pages auto-deploy workflow
+- Fixed: math wrong-answer generator could loop forever when answer was 0
+
 ## Next steps (v2 candidates)
 - QR-code progress transfer between devices
 - Audio cues + optional voice prompts (hearing/vision accessibility)

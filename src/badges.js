@@ -14,13 +14,18 @@ export const BADGES = [
   { id: 'full-garden', icon: '🌳', name: 'The Full Garden', desc: 'Completed a 15-minute session', check: (s) => (s.sessionCounts?.s15 || 0) >= 1 },
   ...GAME_IDS.map((g) => ({
     id: `grow-${g}`, icon: GAMES[g].icon, name: `${GAMES[g].name} Grower`,
-    desc: `Grew ${GAMES[g].name} to level 3`,
-    check: (s) => (s.games[g]?.level || 1) >= 3,
+    desc: `Grew ${GAMES[g].name} to level 25`,
+    check: (s) => (s.games[g]?.level || 1) >= 25,
   })),
   ...GAME_IDS.map((g) => ({
     id: `master-${g}`, icon: '💎', name: `${GAMES[g].name} Gem`,
-    desc: `Grew ${GAMES[g].name} to level 6`,
-    check: (s) => (s.games[g]?.level || 1) >= 6,
+    desc: `Grew ${GAMES[g].name} to level 60`,
+    check: (s) => (s.games[g]?.level || 1) >= 60,
+  })),
+  ...GAME_IDS.map((g) => ({
+    id: `summit-${g}`, icon: '⛰️', name: `${GAMES[g].name} Summit`,
+    desc: `Reached the top: level 100 in ${GAMES[g].name}`,
+    check: (s) => (s.games[g]?.level || 1) >= 100,
   })),
 ]
 

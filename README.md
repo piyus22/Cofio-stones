@@ -23,10 +23,15 @@ Multidomain design follows FINGER / US POINTER findings.
 
 ## Principles
 
-- **Grows with the user.** Each game has its own level (1–8) that rises slowly
-  with sustained success and eases down quickly and quietly when someone
-  struggles — including a 7-day vs 30-day trend guard so a difficult week
-  makes the game *more comfortable*, never discouraging.
+- **Grows with the user.** Each game has its own level (1–100) with continuous
+  difficulty scaling — larger numbers, more words, faster displays, bigger
+  grids, trickier patterns — enough headroom for years of play. A fast-start
+  phase finds a new player's comfort zone quickly; after that, levels rise
+  slowly with sustained success and ease down quickly and quietly when someone
+  struggles, including a 7-day vs 30-day trend guard so a difficult week makes
+  the game *more comfortable*, never discouraging.
+- **Weekly recap.** Once a week, a warm on-device summary: days played,
+  questions answered, which games grew.
 - **Zero stress.** No countdowns, no red X, no failure states. Wrong answers
   get "Good try" and the correct answer, and play simply continues. Timing is
   measured silently for progress tracking only.

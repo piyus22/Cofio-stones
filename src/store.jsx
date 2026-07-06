@@ -28,6 +28,20 @@ function migrate(saved) {
   const base = freshState()
   const s = { ...base, ...saved, newBadges: [] }
   for (const id of GAME_IDS) if (!s.games[id]) s.games[id] = initGameStats()
+  // migrate old 1–8 level scale to 1–100 (v0.1 saves)
+  for (const id of GAME_IDS) {
+    const g = s.games[id]
+    if (g.level <= 8 && !g.scale100) {
+      s.games[id] = {
+        ...g,
+        scale100: true,
+        level: Math.round(1 + ((g.level - 1) / 7) * 99),
+        history: g.history.map((h) => ({ ...h, level: Math.round(1 + ((h.level - 1) / 7) * 99) })),
+      }
+    } else if (!g.scale100) {
+      s.games[id] = { ...g, scale100: true }
+    }
+  }
   if (s.session && !isResumable(s.session)) s.session = null // new day, new game
   return s
 }
@@ -86,6 +100,9 @@ function reducer(state, action) {
 
     case 'CLEAR_NEW_BADGES':
       return { ...state, newBadges: [] }
+
+    case 'SET_FLAG':
+      return { ...state, flags: { ...state.flags, [action.flag]: action.value } }
 
     case 'IMPORT_STATE':
       return migrate(action.data)
