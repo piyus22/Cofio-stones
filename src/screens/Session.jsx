@@ -75,12 +75,35 @@ function RoundRunner({ gameId, level, onDone }) {
 function Finished({ goHome }) {
   const { state, dispatch } = useStore()
   const newBadges = state.newBadges
+  const session = state.session
+  const plan = SESSION_PLANS[session.planId]
+
+  const rows = plan.blocks.map((b, i) => {
+    const res = session.results[i] || []
+    return { game: GAMES[b.game], correct: res.filter((r) => r.correct).length, total: res.length }
+  })
+  const totalCorrect = rows.reduce((s, r) => s + r.correct, 0)
+  const totalRounds = rows.reduce((s, r) => s + r.total, 0)
+
   return (
     <div className="celebrate">
       <div className="big">🌸</div>
       <h1>Lovely work today!</h1>
-      <p className="soft">You finished your session. Every day you play, you’re caring for your mind.</p>
+      <p className="soft">
+        {totalCorrect} of {totalRounds} spot on. Every day you play, you’re caring for your mind.
+      </p>
       {state.streak.current > 1 && <p style={{ fontSize: '1.15em' }}>🔥 {state.streak.current} days in a row</p>}
+
+      <div className="card" style={{ textAlign: 'left' }}>
+        <h3 style={{ marginTop: 0 }}>Today’s garden</h3>
+        {rows.map((r, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0', borderBottom: i < rows.length - 1 ? '1px solid var(--line)' : 'none' }}>
+            <span style={{ fontSize: '1.5em' }}>{r.game.icon}</span>
+            <span style={{ flex: 1 }}>{r.game.name}</span>
+            <Blooms correct={r.correct} total={r.total} />
+          </div>
+        ))}
+      </div>
       {newBadges.length > 0 && (
         <div className="card" style={{ textAlign: 'center' }}>
           <h3>New badge{newBadges.length > 1 ? 's' : ''} earned!</h3>
@@ -98,6 +121,16 @@ function Finished({ goHome }) {
         Done
       </button>
     </div>
+  )
+}
+
+// Per-game result shown as blooms rather than scores — flowers for right
+// answers, buds for the rest. Warm, glanceable, never a red mark.
+function Blooms({ correct, total }) {
+  return (
+    <span aria-label={`${correct} of ${total} correct`} style={{ letterSpacing: 2, whiteSpace: 'nowrap' }}>
+      {Array.from({ length: total }, (_, i) => (i < correct ? '🌸' : '🌿'))}
+    </span>
   )
 }
 

@@ -59,7 +59,10 @@ function McRound({ round, onDone }) {
     <div>
       {round.stimulus && (
         <div className={'stimulus ' + (round.stimulusClass === 'sentence' ? '' : round.stimulusClass || '')}
-          style={round.stimulusClass === 'sentence' ? { fontSize: '1.35em', lineHeight: 1.5 } : undefined}>
+          style={{
+            ...(round.stimulusClass === 'sentence' ? { fontSize: '1.35em', lineHeight: 1.5 } : {}),
+            ...(round.stimulusStyle || {}),
+          }}>
           {round.stimulus}
         </div>
       )}

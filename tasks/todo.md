@@ -44,6 +44,14 @@ All data stays on the user's device; export/import file to carry progress across
 - GitHub Pages auto-deploy workflow
 - Fixed: math wrong-answer generator could loop forever when answer was 0
 
+## v0.3 additions (done)
+- Two new games: True Colors (Stroop — inhibition/task-switching) and Arrow River
+  (flanker — selective attention); 10-min session now 6 games, 15-min all 8
+- Weekly recap redesigned: stat tiles (days/questions/accuracy) + top level gains;
+  hidden for accounts younger than 4 days
+- Session-end summary redesigned: per-game breakdown with bloom marks (🌸/🌿)
+- Note: GitHub Pages requires the repo to be PUBLIC on a free account
+
 ## Next steps (v2 candidates)
 - QR-code progress transfer between devices
 - Audio cues + optional voice prompts (hearing/vision accessibility)

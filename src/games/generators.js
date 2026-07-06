@@ -190,6 +190,65 @@ export function patternRound(level) {
   return { kind: 'mc', stimulus: seq.join(',  ') + ',  ?', question: 'What comes next?', choices, answerIndex }
 }
 
+// ---------- 7. True Colors (Stroop — inhibition & task switching) ----------
+// The classic Stroop effect: the word says one color, the ink shows another.
+// Low levels: mostly congruent, always "name the ink". High levels: mostly
+// incongruent AND the question itself alternates (ink vs word) = task switching.
+const INK_COLORS = [
+  { name: 'RED', hex: '#C0392B' },
+  { name: 'BLUE', hex: '#2E6DA4' },
+  { name: 'GREEN', hex: '#3F6B4F' },
+  { name: 'PURPLE', hex: '#7D3C98' },
+  { name: 'ORANGE', hex: '#CA6F1E' },
+  { name: 'BROWN', hex: '#7B5E3B' },
+]
+export function stroopRound(level) {
+  const t = T(level)
+  const nColors = 3 + (t > 0.25 ? 1 : 0) + (t > 0.5 ? 1 : 0) + (t > 0.75 ? 1 : 0)
+  const pool = INK_COLORS.slice(0, nColors)
+  const word = pick(pool)
+  const incongruent = Math.random() < lerp(0.3, 0.9, t)
+  const ink = incongruent ? pick(pool.filter((c) => c.name !== word.name)) : word
+  const askInk = t > 0.55 ? Math.random() < 0.6 : true
+  const answer = askInk ? ink.name : word.name
+  const wrongs = sample(pool.filter((c) => c.name !== answer).map((c) => c.name), Math.min(3, nColors - 1))
+  const { choices, answerIndex } = mcFromAnswer(answer, wrongs)
+  return {
+    kind: 'mc',
+    stimulus: word.name,
+    stimulusStyle: { color: ink.hex, fontWeight: 700, letterSpacing: '0.06em' },
+    question: askInk ? 'What COLOR is the ink?' : 'What does the word SAY?',
+    choices,
+    answerIndex,
+    speed: true,
+  }
+}
+
+// ---------- 8. Arrow River (flanker — selective attention) ----------
+// Point out the MIDDLE arrow while its neighbours try to pull your eye away.
+export function flankerRound(level) {
+  const t = T(level)
+  const dirs = t > 0.7 ? ['←', '→', '↑', '↓'] : ['←', '→']
+  const n = 3 + (t > 0.2 ? 2 : 0) + (t > 0.55 ? 2 : 0) // 3 → 7 arrows
+  const target = pick(dirs)
+  const congruent = Math.random() < lerp(0.6, 0.15, t)
+  const flank = congruent ? target : pick(dirs.filter((d) => d !== target))
+  const arr = Array(n).fill(flank)
+  arr[Math.floor(n / 2)] = target
+  const sep = t > 0.4 ? ' ' : '  ' // arrows crowd together as levels rise
+  const wrongs = dirs.filter((d) => d !== target).slice(0, 3)
+  const { choices, answerIndex } = mcFromAnswer(target, wrongs)
+  return {
+    kind: 'mc',
+    stimulus: arr.join(sep),
+    stimulusClass: 'symbol',
+    question: 'Which way does the MIDDLE arrow point?',
+    choices,
+    answerIndex,
+    speed: true,
+  }
+}
+
 // ---------- Registry ----------
 export const GAMES = {
   math: { id: 'math', name: 'Number Stones', icon: '🧮', domain: 'Numbers & working memory', makeRound: mathRound },
@@ -198,6 +257,8 @@ export const GAMES = {
   spatial: { id: 'spatial', name: 'Stone Path', icon: '🪨', domain: 'Places & spaces', makeRound: spatialRound },
   speed: { id: 'speed', name: 'Quick Match', icon: '⚡', domain: 'Thinking speed', makeRound: speedMatchRound },
   pattern: { id: 'pattern', name: 'Pattern Pebbles', icon: '🔮', domain: 'Puzzles & reasoning', makeRound: patternRound },
+  stroop: { id: 'stroop', name: 'True Colors', icon: '🎨', domain: 'Focus & self-control', makeRound: stroopRound },
+  flanker: { id: 'flanker', name: 'Arrow River', icon: '🏹', domain: 'Attention', makeRound: flankerRound },
 }
 
 export const GAME_IDS = Object.keys(GAMES)

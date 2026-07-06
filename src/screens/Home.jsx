@@ -78,18 +78,46 @@ function WeeklyRecap() {
   const { state, dispatch } = useStore()
   const thisWeek = weekKey()
   if (state.flags?.lastRecapWeek === thisWeek) return null
+  // let brand-new players settle in before the first recap
+  const ageDays = state.profile?.createdAt ? (Date.now() - new Date(state.profile.createdAt)) / 86400000 : 0
+  if (ageDays < 4) return null
   const recap = buildRecap(state)
   if (!recap) return null
   return (
-    <div className="card" style={{ background: 'var(--gold-soft)', borderColor: 'var(--gold)' }}>
-      <h3>Your week in the garden 🌼</h3>
-      {recap.lines.map((l, i) => <p key={i} style={{ margin: '6px 0' }}>{l}</p>)}
+    <div className="card" style={{ background: 'var(--gold-soft)', borderColor: 'var(--gold)', borderWidth: 2 }}>
+      <h3 style={{ marginTop: 0 }}>Your week in the garden 🌼</h3>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, margin: '14px 0' }}>
+        <StatTile big={recap.daysPlayed} label={`day${recap.daysPlayed > 1 ? 's' : ''} played`} />
+        <StatTile big={recap.rounds} label="questions" />
+        <StatTile big={`${recap.pct}%`} label="spot on" />
+      </div>
+      {recap.gains.length > 0 ? (
+        <div style={{ background: 'var(--bg-card)', borderRadius: 12, padding: '10px 14px' }}>
+          {recap.gains.slice(0, 3).map((g) => (
+            <p key={g.id} style={{ margin: '4px 0' }}>
+              {GAMES[g.id].icon} <strong>{GAMES[g.id].name}</strong> grew {g.gain} level{g.gain > 1 ? 's' : ''} ↗
+            </p>
+          ))}
+        </div>
+      ) : (
+        <p style={{ margin: '6px 0' }}>You held steady — showing up is what matters most. 🌿</p>
+      )}
+      {state.streak.current >= 3 && <p className="center" style={{ margin: '10px 0 0' }}>🔥 {state.streak.current}-day streak</p>}
       <button
         className="btn btn-quiet"
         onClick={() => dispatch({ type: 'SET_FLAG', flag: 'lastRecapWeek', value: thisWeek })}
       >
         Thank you ✓
       </button>
+    </div>
+  )
+}
+
+function StatTile({ big, label }) {
+  return (
+    <div className="center" style={{ background: 'var(--bg-card)', borderRadius: 12, padding: '12px 4px' }}>
+      <div style={{ fontFamily: 'var(--font-head)', fontSize: '1.7em', color: 'var(--green)', lineHeight: 1.1 }}>{big}</div>
+      <div className="soft small">{label}</div>
     </div>
   )
 }
