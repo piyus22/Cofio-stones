@@ -3,6 +3,7 @@ import { useStore } from './store.jsx'
 import Welcome from './screens/Welcome.jsx'
 import Home from './screens/Home.jsx'
 import Session from './screens/Session.jsx'
+import Practice from './screens/Practice.jsx'
 import Progress from './screens/Progress.jsx'
 import Badges from './screens/Badges.jsx'
 import Profile from './screens/Profile.jsx'
@@ -18,6 +19,7 @@ export default function App() {
   const { state, dispatch } = useStore()
   const [tab, setTab] = useState('home')
   const [inSession, setInSession] = useState(false)
+  const [practiceGame, setPracticeGame] = useState(null)
 
   if (!state.profile) {
     return <div className="app"><Welcome /></div>
@@ -36,9 +38,17 @@ export default function App() {
     )
   }
 
+  if (practiceGame) {
+    return (
+      <div className="app">
+        <Practice gameId={practiceGame} goHome={() => setPracticeGame(null)} />
+      </div>
+    )
+  }
+
   return (
     <div className="app">
-      {tab === 'home' && <Home startSession={startSession} />}
+      {tab === 'home' && <Home startSession={startSession} startPractice={setPracticeGame} />}
       {tab === 'progress' && <Progress />}
       {tab === 'badges' && <Badges />}
       {tab === 'profile' && <Profile />}

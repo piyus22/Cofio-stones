@@ -2,9 +2,10 @@
 import React from 'react'
 import { useStore } from '../store.jsx'
 import { SESSION_PLANS, isResumable, sessionProgress } from '../sessions.js'
+import { GAMES, GAME_IDS } from '../games/generators.js'
 import { todayKey } from '../storage.js'
 
-export default function Home({ startSession }) {
+export default function Home({ startSession, startPractice }) {
   const { state, dispatch } = useStore()
   const name = state.profile?.name
   const resumable = isResumable(state.session)
@@ -51,6 +52,18 @@ export default function Home({ startSession }) {
           <p className="soft small center" style={{ marginTop: 16 }}>
             You can pause at any moment and continue later in the day.
           </p>
+
+          <h2 style={{ marginTop: 28 }}>Practice Corner 🎯</h2>
+          <p className="soft small">Fancy just one exercise? Play as long as you like — it still counts toward your growth.</p>
+          <div className="choices">
+            {GAME_IDS.map((id) => (
+              <button key={id} className="btn" style={{ margin: 0 }} onClick={() => startPractice(id)}>
+                <span style={{ fontSize: '1.5em' }}>{GAMES[id].icon}</span>
+                <br />
+                {GAMES[id].name}
+              </button>
+            ))}
+          </div>
         </>
       )}
     </div>

@@ -72,6 +72,15 @@ function reducer(state, action) {
       return newState
     }
 
+    case 'PRACTICE_BLOCK_DONE': {
+      // action.game, action.results — free play still feeds growth tracking
+      if (!action.results?.length) return state
+      return {
+        ...state,
+        games: { ...state.games, [action.game]: updateAfterBlock(state.games[action.game], action.results) },
+      }
+    }
+
     case 'CLEAR_FINISHED_SESSION':
       return state.session?.finished ? { ...state, session: null } : state
 

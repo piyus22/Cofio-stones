@@ -10,7 +10,7 @@ export default function Welcome() {
   if (step === 0) {
     return (
       <div className="celebrate" style={{ paddingTop: 60 }}>
-        <div className="big">🪨</div>
+        <img src="./icon.svg" alt="" width="132" height="132" style={{ borderRadius: 30, boxShadow: 'var(--shadow)' }} />
         <h1>Welcome to Cofio Stones</h1>
         <p className="soft" style={{ maxWidth: 440, margin: '12px auto' }}>
           Gentle daily exercises for your mind — numbers, words, memory and puzzles

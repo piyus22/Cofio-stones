@@ -24,8 +24,13 @@ export function updateAfterBlock(stats, results) {
   const accuracy = results.filter((r) => r.correct).length / results.length
   const avgMs = Math.round(results.reduce((s, r) => s + r.ms, 0) / results.length)
 
+  // Fast start: for the first few blocks of a game, a confident player jumps
+  // quickly to their true comfort zone instead of crawling through easy levels.
+  const settling = stats.history.length < 6
+
   let delta = 0
-  if (accuracy >= 0.85) delta = +0.4
+  if (accuracy === 1 && settling) delta = +1.0
+  else if (accuracy >= 0.85) delta = settling ? +0.7 : +0.4
   else if (accuracy >= 0.7) delta = +0.15
   else if (accuracy >= 0.5) delta = -0.25
   else delta = -0.6
