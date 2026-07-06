@@ -83,6 +83,17 @@ All data stays on the user's device; export/import file to carry progress across
 - Native confirm()/alert() replaced with large-text in-app dialogs
 - Pages deploy fixed: configure-pages enablement:true (auto-enables Pages), node 22
 
+## v0.7 additions (done) — safety & kindness
+- Wellbeing monitor: conservative multi-domain decline detection (3-week vs
+  baseline windows, 2-of-3 signals per game, 3+ games to speak up, 8-week
+  minimum history) with carefully worded "gentle observation" card
+- Level-controlled response-time trends (difficulty can't fake "slowing down")
+- Subtraction available from level 1 in Number Stones
+- Service worker v2: network-first HTML (updates arrive next visit),
+  cache-first hashed assets, update handover only at app launch
+- Error boundary: friendly recovery screen instead of white screen
+- Streak grace day: one missed day per rolling week is quietly forgiven
+
 ## Remaining (post-launch)
 - Memorize-pacing control option, full accessibility audit with axe
 - Real-user testing with 60+ adults — the actual gate to a 9

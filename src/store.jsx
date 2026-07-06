@@ -6,6 +6,7 @@ import { initGameStats, updateAfterBlock } from './adaptive.js'
 import { GAME_IDS } from './games/generators.js'
 import { SESSION_PLANS, newSession, isResumable } from './sessions.js'
 import { checkBadges } from './badges.js'
+import { advanceStreak } from './streak.js'
 
 function freshState() {
   const games = {}
@@ -118,26 +119,15 @@ function onSessionFinished(state) {
   const today = todayKey()
   const playDays = state.playDays.includes(today) ? state.playDays : [...state.playDays, today].slice(-800)
 
-  // streak
-  let { current, best, lastDay } = state.streak
-  const flags = { ...state.flags }
-  if (lastDay !== today) {
-    const gapDays = lastDay ? Math.round((new Date(today) - new Date(lastDay)) / 86400000) : 0
-    if (gapDays === 1) current += 1
-    else {
-      if (gapDays >= 4 && lastDay) flags.comeback = true
-      current = 1
-    }
-    lastDay = today
-    best = Math.max(best, current)
-  }
+  const { streak, comeback } = advanceStreak(state.streak, today)
+  const flags = comeback ? { ...state.flags, comeback: true } : { ...state.flags }
 
   const sessionCounts = {
     ...state.sessionCounts,
     [state.session.planId]: (state.sessionCounts[state.session.planId] || 0) + 1,
   }
 
-  let next = { ...state, playDays, streak: { current, best, lastDay }, sessionCounts, flags }
+  let next = { ...state, playDays, streak, sessionCounts, flags }
   const fresh = checkBadges(next)
   if (fresh.length) next = { ...next, badges: [...next.badges, ...fresh], newBadges: fresh }
   return next

@@ -4,6 +4,7 @@ import { updateAfterBlock, initGameStats, gameLevel, LEVEL_MAX } from '../src/ad
 import { SESSION_PLANS, newSession, sessionProgress, blocksForDate } from '../src/sessions.js'
 import { checkBadges } from '../src/badges.js'
 import { wellbeingStatus } from '../src/wellbeing.js'
+import { advanceStreak } from '../src/streak.js'
 import { WORD_TIERS } from '../src/data/words.js'
 import { SENTENCE_TIERS, SENTENCE_TEMPLATES } from '../src/data/sentences.js'
 
@@ -162,6 +163,25 @@ for (const pid of Object.keys(SESSION_PLANS)) {
   const young = { games: { math: { level: 5, history: [entry(10, 5, 0.9, 3000)] } } }
   for (const id of GAME_IDS) young.games[id] = young.games[id] || { level: 1, history: [] }
   ok(wellbeingStatus(young).status === 'building', 'thin data → building, never alarms')
+}
+
+// ---- streak grace day ----
+{
+  const fresh = { current: 0, best: 0, lastDay: null, lastGrace: null }
+  let r = advanceStreak(fresh, '2026-07-01')
+  ok(r.streak.current === 1, 'first play starts streak at 1')
+  r = advanceStreak(r.streak, '2026-07-02')
+  ok(r.streak.current === 2, 'consecutive day increments')
+  r = advanceStreak(r.streak, '2026-07-04') // missed the 3rd
+  ok(r.streak.current === 3, `one missed day forgiven by grace, got ${r.streak.current}`)
+  r = advanceStreak(r.streak, '2026-07-06') // missed the 5th — grace already used this week
+  ok(r.streak.current === 1, `second grace within 7 days must not apply, got ${r.streak.current}`)
+  r = advanceStreak(r.streak, '2026-07-06')
+  ok(r.streak.current === 1, 'same-day replay does not double-count')
+  r = advanceStreak({ current: 5, best: 5, lastDay: '2026-07-01', lastGrace: null }, '2026-07-10')
+  ok(r.streak.current === 1 && r.comeback === true, 'long break resets and flags comeback')
+  r = advanceStreak({ current: 5, best: 9, lastDay: '2026-07-01', lastGrace: null }, '2026-07-02')
+  ok(r.streak.best === 9, 'best never decreases')
 }
 
 if (fails === 0) console.log('ALL LOGIC TESTS PASSED')
