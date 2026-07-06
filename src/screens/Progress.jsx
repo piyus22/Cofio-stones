@@ -4,6 +4,7 @@ import React from 'react'
 import { useStore } from '../store.jsx'
 import { GAMES, GAME_IDS } from '../games/generators.js'
 import { trendLabel, avgTimeTrend, LEVEL_MAX } from '../adaptive.js'
+import { wellbeingStatus } from '../wellbeing.js'
 
 export default function Progress() {
   const { state } = useStore()
@@ -47,6 +48,48 @@ export default function Progress() {
           </div>
         )
       })}
+
+      <WellbeingCard />
+    </div>
+  )
+}
+
+// Speaks only with months of data, and only ever gently. Sustained change
+// across several domains → a calm suggestion to mention it to a doctor.
+// One noisy domain or thin data → reassurance or silence.
+function WellbeingCard() {
+  const { state } = useStore()
+  const { status } = wellbeingStatus(state)
+
+  if (status === 'building' || status === 'watch') return null
+
+  if (status === 'steady') {
+    return (
+      <p className="soft small center" style={{ marginTop: 20 }}>
+        Looking across recent months, your overall pattern is steady. 🌿
+      </p>
+    )
+  }
+
+  // status === 'checkup'
+  return (
+    <div className="card" style={{ borderColor: 'var(--gold)', borderWidth: 2, background: 'var(--gold-soft)' }}>
+      <h3 style={{ marginTop: 0 }}>A gentle observation 🕊️</h3>
+      <p>
+        Over the past couple of months, several of your exercises have been
+        gently easing to keep things comfortable. That can happen for many
+        everyday reasons — poor sleep, stress, a busy spell, new medicines,
+        or eyesight changes.
+      </p>
+      <p>
+        If you’ve noticed changes in daily life too, it may be worth mentioning
+        at your next doctor’s visit. Catching things early is always worthwhile —
+        and often the explanation is something simple and fixable.
+      </p>
+      <p className="soft small">
+        Cofio Stones is not a medical device and cannot diagnose anything.
+        This note is based only on your game results.
+      </p>
     </div>
   )
 }

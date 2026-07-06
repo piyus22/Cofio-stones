@@ -101,13 +101,18 @@ export function trendLabel(history) {
   return { arrow: '→', label: 'Nice and steady' }
 }
 
+// Compares response times only between blocks played at SIMILAR difficulty,
+// so climbing to harder levels never masquerades as "slowing down".
 export function avgTimeTrend(history) {
   const withTimes = history.filter((h) => h.avgMs > 0)
-  if (withTimes.length < 4) return null
-  const half = Math.floor(withTimes.length / 2)
+  if (withTimes.length < 6) return null
+  const currentLevel = withTimes[withTimes.length - 1].level
+  const comparable = withTimes.filter((h) => Math.abs(h.level - currentLevel) <= 10)
+  if (comparable.length < 6) return null
+  const half = Math.floor(comparable.length / 2)
   const avg = (arr) => arr.reduce((s, h) => s + h.avgMs, 0) / arr.length
-  const older = avg(withTimes.slice(0, half))
-  const newer = avg(withTimes.slice(half))
+  const older = avg(comparable.slice(0, half))
+  const newer = avg(comparable.slice(half))
   const change = (older - newer) / older
   if (change > 0.1) return 'Answering quicker than before'
   if (change < -0.1) return 'Taking a little more time — that is perfectly fine'

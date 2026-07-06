@@ -42,8 +42,7 @@ function mcFromAnswer(answer, wrongs) {
 export function mathRound(level) {
   const t = T(level)
   // operation pool widens with difficulty
-  const ops = ['+']
-  if (t > 0.05) ops.push('−')
+  const ops = ['+', '−'] // subtraction from the very first level — it's no harder than addition
   if (t > 0.15) ops.push('×')
   if (t > 0.35) ops.push('÷')
   if (t > 0.45) ops.push('3nums')

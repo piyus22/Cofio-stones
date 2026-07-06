@@ -3,6 +3,7 @@ import { GAMES, GAME_IDS } from '../src/games/generators.js'
 import { updateAfterBlock, initGameStats, gameLevel, LEVEL_MAX } from '../src/adaptive.js'
 import { SESSION_PLANS, newSession, sessionProgress, blocksForDate } from '../src/sessions.js'
 import { checkBadges } from '../src/badges.js'
+import { wellbeingStatus } from '../src/wellbeing.js'
 import { WORD_TIERS } from '../src/data/words.js'
 import { SENTENCE_TIERS, SENTENCE_TEMPLATES } from '../src/data/sentences.js'
 
@@ -140,6 +141,27 @@ for (const pid of Object.keys(SESSION_PLANS)) {
   ok(fresh.includes('streak-3'), 'streak-3 badge')
   ok(fresh.includes('grow-math'), 'grow-math badge (level 25+)')
   ok(!fresh.includes('master-math'), 'master-math not yet (needs 60)')
+}
+
+// ---- wellbeing monitor: silent on noise, speaks on sustained multi-domain change ----
+{
+  const now = Date.now()
+  const entry = (daysAgo, level, accuracy, avgMs) => ({ t: new Date(now - daysAgo * 86400000).toISOString(), level, accuracy, avgMs, rounds: 5 })
+  const flatHistory = () => [...Array(8)].map((_, i) => entry(80 - i * 8, 40, 0.85, 3000)).concat([...Array(6)].map((_, i) => entry(18 - i * 3, 40, 0.85, 3000)))
+  const decliningHistory = () => [...Array(8)].map((_, i) => entry(80 - i * 8, 40, 0.9, 3000)).concat([...Array(6)].map((_, i) => entry(18 - i * 3, 28, 0.65, 4200)))
+
+  const mkState = (decliningIds) => {
+    const games = {}
+    for (const id of GAME_IDS) games[id] = { level: 40, history: decliningIds.includes(id) ? decliningHistory() : flatHistory() }
+    return { games }
+  }
+
+  ok(wellbeingStatus(mkState([])).status === 'steady', 'steady state should report steady')
+  ok(wellbeingStatus(mkState(['math'])).status === 'watch', 'one declining domain → watch (not surfaced)')
+  ok(wellbeingStatus(mkState(['math', 'words', 'spatial'])).status === 'checkup', 'three declining domains → checkup')
+  const young = { games: { math: { level: 5, history: [entry(10, 5, 0.9, 3000)] } } }
+  for (const id of GAME_IDS) young.games[id] = young.games[id] || { level: 1, history: [] }
+  ok(wellbeingStatus(young).status === 'building', 'thin data → building, never alarms')
 }
 
 if (fails === 0) console.log('ALL LOGIC TESTS PASSED')
