@@ -6,6 +6,7 @@ import { useStore } from '../store.jsx'
 import { GAMES } from '../games/generators.js'
 import { gameLevel } from '../adaptive.js'
 import RoundPlayer from '../games/RoundPlayer.jsx'
+import { HOW_TO, tipFor } from '../data/strategies.js'
 
 const BLOCK = 5
 
@@ -17,6 +18,8 @@ export default function Practice({ gameId, goHome }) {
   const [totalDone, setTotalDone] = useState(0)
   const [resting, setResting] = useState(false)
   const [roundKey, setRoundKey] = useState(0)
+  const firstTime = !state.flags?.['tut_' + gameId]
+  const [started, setStarted] = useState(!firstTime)
 
   function finish(pending = results) {
     // partial blocks still count toward growth if there's enough signal
@@ -35,6 +38,31 @@ export default function Practice({ gameId, goHome }) {
       setResults(next)
       setRoundKey(roundKey + 1)
     }
+  }
+
+  if (!started) {
+    return (
+      <div className="card center" style={{ marginTop: 40, padding: 32 }}>
+        <div style={{ fontSize: '3em' }}>{game.icon}</div>
+        <h2>{game.name}</h2>
+        <p style={{ color: 'var(--green)', fontWeight: 600 }}>New exercise — here’s how it works:</p>
+        <div style={{ textAlign: 'left', background: 'var(--green-soft)', borderRadius: 12, padding: '12px 16px', margin: '10px 0' }}>
+          {HOW_TO[gameId]?.map((line, i) => (
+            <p key={i} style={{ margin: '6px 0' }}>{i + 1}. {line}</p>
+          ))}
+        </div>
+        <button
+          className="btn btn-primary"
+          onClick={() => {
+            dispatch({ type: 'SET_FLAG', flag: 'tut_' + gameId, value: true })
+            setStarted(true)
+          }}
+        >
+          Got it — let’s try
+        </button>
+        <button className="btn btn-quiet" onClick={goHome}>Maybe later</button>
+      </div>
+    )
   }
 
   if (resting) {

@@ -241,13 +241,15 @@ export function patternRound(level) {
 // The classic Stroop effect: the word says one color, the ink shows another.
 // Low levels: mostly congruent, always "name the ink". High levels: mostly
 // incongruent AND the question itself alternates (ink vs word) = task switching.
+// Colorblind-safe ink palette (based on Okabe–Ito): distinguishable under
+// deuteranopia and protanopia, and every name is a common colour word.
 const INK_COLORS = [
-  { name: 'RED', hex: '#C0392B' },
-  { name: 'BLUE', hex: '#2E6DA4' },
-  { name: 'GREEN', hex: '#3F6B4F' },
-  { name: 'PURPLE', hex: '#7D3C98' },
-  { name: 'ORANGE', hex: '#CA6F1E' },
-  { name: 'BROWN', hex: '#7B5E3B' },
+  { name: 'BLUE', hex: '#0072B2' },
+  { name: 'ORANGE', hex: '#D55E00' },
+  { name: 'BLACK', hex: '#33312C' },
+  { name: 'PINK', hex: '#CC79A7' },
+  { name: 'YELLOW', hex: '#A98600' },
+  { name: 'GREY', hex: '#8C8578' },
 ]
 export function stroopRound(level) {
   const t = T(level)

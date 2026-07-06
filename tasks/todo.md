@@ -76,9 +76,16 @@ All data stays on the user's device; export/import file to carry progress across
   auto-restore if localStorage is evicted, backup nudge every 10 sessions,
   apple-mobile-web-app meta tags
 
-## Remaining critique items (not yet done)
-- First-experience pack: per-game guided demo, colorblind-safe Stroop inks,
-  memorize-pacing control, replace confirm()/alert(), accessibility audit
+## v0.6 additions (done) — first-experience + launch
+- First-run how-to for every game (numbered plain-language steps, shown once;
+  "How to play?" available afterwards) in both sessions and Practice Corner
+- Stroop inks switched to colorblind-safe Okabe–Ito palette
+- Native confirm()/alert() replaced with large-text in-app dialogs
+- Pages deploy fixed: configure-pages enablement:true (auto-enables Pages), node 22
+
+## Remaining (post-launch)
+- Memorize-pacing control option, full accessibility audit with axe
+- Real-user testing with 60+ adults — the actual gate to a 9
 
 ## Next steps (v2 candidates)
 - QR-code progress transfer between devices

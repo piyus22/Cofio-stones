@@ -1,6 +1,7 @@
 // Home: greeting, resume card if a session is paused, session length choices.
-import React from 'react'
+import React, { useState } from 'react'
 import { useStore } from '../store.jsx'
+import { ConfirmDialog } from '../components/Dialog.jsx'
 import { SESSION_PLANS, isResumable, sessionProgress } from '../sessions.js'
 import { GAMES, GAME_IDS } from '../games/generators.js'
 import { todayKey } from '../storage.js'
@@ -8,6 +9,7 @@ import { buildRecap, weekKey } from '../recap.js'
 
 export default function Home({ startSession, startPractice }) {
   const { state, dispatch } = useStore()
+  const [confirmFresh, setConfirmFresh] = useState(false)
   const name = state.profile?.name
   const resumable = isResumable(state.session)
   const playedToday = state.streak.lastDay === todayKey()
@@ -30,12 +32,18 @@ export default function Home({ startSession, startPractice }) {
           <h3>Your session is waiting</h3>
           <p className="soft">You’re {Math.round(sessionProgress(state.session) * 100)}% of the way through. Pick up right where you left off.</p>
           <button className="btn btn-primary" onClick={() => startSession(null)}>Continue session ▸</button>
-          <button
-            className="btn btn-quiet"
-            onClick={() => { if (confirm('Start fresh and let go of the paused session?')) dispatch({ type: 'ABANDON_SESSION' }) }}
-          >
+          <button className="btn btn-quiet" onClick={() => setConfirmFresh(true)}>
             Start fresh instead
           </button>
+          <ConfirmDialog
+            open={confirmFresh}
+            title="Start fresh?"
+            body="Your paused session will be set aside so you can begin a new one."
+            confirmLabel="Yes, start fresh"
+            cancelLabel="Keep my session"
+            onConfirm={() => { setConfirmFresh(false); dispatch({ type: 'ABANDON_SESSION' }) }}
+            onCancel={() => setConfirmFresh(false)}
+          />
         </div>
       )}
 

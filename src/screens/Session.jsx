@@ -7,7 +7,7 @@ import { GAMES } from '../games/generators.js'
 import { gameLevel } from '../adaptive.js'
 import RoundPlayer from '../games/RoundPlayer.jsx'
 import { BADGES } from '../badges.js'
-import { tipFor } from '../data/strategies.js'
+import { tipFor, HOW_TO } from '../data/strategies.js'
 
 export default function Session({ goHome }) {
   const { state, dispatch } = useStore()
@@ -37,7 +37,16 @@ export default function Session({ goHome }) {
       </div>
 
       {intro ? (
-        <BlockIntro game={game} onStart={() => setIntro(false)} isFirst={session.blockIndex === 0 && session.roundIndex === 0} resumed={session.roundIndex > 0} />
+        <BlockIntro
+          game={game}
+          onStart={() => {
+            if (!state.flags?.['tut_' + block.game]) dispatch({ type: 'SET_FLAG', flag: 'tut_' + block.game, value: true })
+            setIntro(false)
+          }}
+          firstTime={!state.flags?.['tut_' + block.game]}
+          isFirst={session.blockIndex === 0 && session.roundIndex === 0}
+          resumed={session.roundIndex > 0}
+        />
       ) : (
         <RoundRunner
           key={`${session.blockIndex}-${session.roundIndex}`}
@@ -54,21 +63,34 @@ export default function Session({ goHome }) {
   )
 }
 
-function BlockIntro({ game, onStart, isFirst, resumed }) {
+function BlockIntro({ game, onStart, isFirst, resumed, firstTime }) {
+  const [showHelp, setShowHelp] = useState(false)
+  const explain = firstTime || showHelp
   return (
     <div className="card center" style={{ marginTop: 40, padding: 32 }}>
       <div style={{ fontSize: '3em' }}>{game.icon}</div>
       <h2>{game.name}</h2>
       <p className="soft">{game.domain}</p>
-      {tipFor(game.id) && (
+      {firstTime && <p style={{ color: 'var(--green)', fontWeight: 600 }}>New exercise — here’s how it works:</p>}
+      {explain && (
+        <div style={{ textAlign: 'left', background: 'var(--green-soft)', borderRadius: 12, padding: '12px 16px', margin: '10px 0' }}>
+          {HOW_TO[game.id]?.map((line, i) => (
+            <p key={i} style={{ margin: '6px 0' }}>{i + 1}. {line}</p>
+          ))}
+        </div>
+      )}
+      {!explain && tipFor(game.id) && (
         <p style={{ background: 'var(--gold-soft)', borderRadius: 12, padding: '10px 14px', fontSize: '0.95em' }}>
           💡 {tipFor(game.id)}
         </p>
       )}
       {resumed && <p className="soft">Welcome back — continuing right where you left off.</p>}
       <button className="btn btn-primary" onClick={onStart} style={{ marginTop: 18 }}>
-        {isFirst ? 'Begin' : 'Ready — let’s go'}
+        {firstTime ? 'Got it — let’s try' : isFirst ? 'Begin' : 'Ready — let’s go'}
       </button>
+      {!explain && (
+        <button className="btn btn-quiet" onClick={() => setShowHelp(true)}>How to play?</button>
+      )}
     </div>
   )
 }

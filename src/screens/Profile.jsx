@@ -3,12 +3,16 @@ import React, { useRef, useState } from 'react'
 import { useStore } from '../store.jsx'
 import { exportState, parseImport } from '../storage.js'
 import Science from './Science.jsx'
+import { ConfirmDialog, NoticeDialog } from '../components/Dialog.jsx'
 
 export default function Profile() {
   const { state, dispatch } = useStore()
   const [name, setName] = useState(state.profile?.name || '')
   const [saved, setSaved] = useState(false)
   const [showScience, setShowScience] = useState(false)
+  const [pendingImport, setPendingImport] = useState(null)
+  const [notice, setNotice] = useState(null) // { title, body }
+  const [confirmErase, setConfirmErase] = useState(false)
   const fileRef = useRef(null)
 
   if (showScience) return <Science onBack={() => setShowScience(false)} />
@@ -25,13 +29,9 @@ export default function Profile() {
     const reader = new FileReader()
     reader.onload = () => {
       try {
-        const data = parseImport(reader.result)
-        if (confirm('Load this progress file? It will replace what is on this device.')) {
-          dispatch({ type: 'IMPORT_STATE', data })
-          alert('Welcome back! Your progress has been restored.')
-        }
+        setPendingImport(parseImport(reader.result))
       } catch {
-        alert('Sorry, that does not look like a Cofio Stones progress file.')
+        setNotice({ title: 'Hmm, that file didn’t work', body: 'That doesn’t look like a Cofio Stones progress file. Look for a file named like “cofio-stones-progress-….json”.' })
       }
       e.target.value = ''
     }
@@ -86,18 +86,39 @@ export default function Profile() {
       <div className="card">
         <h3>Fresh start</h3>
         <p className="soft small">This erases everything on this device. It cannot be undone.</p>
-        <button
-          className="btn"
-          style={{ color: 'var(--terra)' }}
-          onClick={() => {
-            if (confirm('Erase all progress on this device?') && confirm('Are you quite sure? This cannot be undone.')) {
-              dispatch({ type: 'RESET_ALL' })
-            }
-          }}
-        >
+        <button className="btn" style={{ color: 'var(--terra)' }} onClick={() => setConfirmErase(true)}>
           Erase everything
         </button>
       </div>
+
+      <ConfirmDialog
+        open={pendingImport !== null}
+        title="Load this progress file?"
+        body="It will replace the progress currently on this device."
+        confirmLabel="Yes, load it"
+        onConfirm={() => {
+          dispatch({ type: 'IMPORT_STATE', data: pendingImport })
+          setPendingImport(null)
+          setNotice({ title: 'Welcome back! 🌿', body: 'Your progress has been restored on this device.' })
+        }}
+        onCancel={() => setPendingImport(null)}
+      />
+      <ConfirmDialog
+        open={confirmErase}
+        danger
+        title="Erase all progress?"
+        body="This removes everything on this device — profile, levels, badges and history. It cannot be undone. If in doubt, save a progress file first."
+        confirmLabel="Erase everything"
+        cancelLabel="Keep my progress"
+        onConfirm={() => { setConfirmErase(false); dispatch({ type: 'RESET_ALL' }) }}
+        onCancel={() => setConfirmErase(false)}
+      />
+      <NoticeDialog
+        open={notice !== null}
+        title={notice?.title}
+        body={notice?.body}
+        onClose={() => setNotice(null)}
+      />
 
       <p className="soft small center">
         Cofio Stones is free, has no adverts, and never collects your data.

@@ -47,6 +47,19 @@ export const STRATEGIES = {
   ],
 }
 
+// First-time explanations, in plain language. Shown once per game, the very
+// first time someone meets it — then available behind "How to play".
+export const HOW_TO = {
+  math: ['A sum appears on screen.', 'Take all the time you need, then tap the answer.', 'A wrong tap is fine — we show the right answer and simply carry on.'],
+  words: ['Words appear one at a time — just watch them.', 'Then we ask: which word was NOT shown?', 'Tap your choice from the list.'],
+  sentence: ['You’ll see a sentence with a missing word.', 'Tap the word that completes it best.'],
+  spatial: ['Stones light up, one after another.', 'When they stop, tap the stones that lit up.', 'At higher levels, the order matters too.'],
+  speed: ['A shape flashes briefly, then hides.', 'Tap the shape you just saw.', 'It gets quicker as you grow — that’s the training.'],
+  pattern: ['A sequence follows a hidden rule.', 'Work out what comes next and tap it.'],
+  stroop: ['A colour word appears, written in coloured ink.', 'Read the question carefully — sometimes we ask about the INK, sometimes the WORD.', 'It’s tricky on purpose — that’s the exercise!'],
+  flanker: ['A row of arrows appears.', 'Only the MIDDLE one matters.', 'Tap the direction it points, and let the neighbours fool you not.'],
+}
+
 export function tipFor(gameId) {
   const tips = STRATEGIES[gameId] || []
   if (!tips.length) return null
